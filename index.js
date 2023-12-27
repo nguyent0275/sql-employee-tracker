@@ -37,7 +37,7 @@ async function menu() {
     case menuChoices[5]:
       return addEmployee();
     case menuChoices[6]:
-      return updateEmployee();
+      return updateEmployeeRole();
   }
 }
 
@@ -86,6 +86,15 @@ async function addDepartment() {
 // function to add a role
 async function addRole() {
   console.log("Adding Role");
+  // departmentData is the list of rows / onjects
+  // metaData contains data like column names etc.
+  // destructuring simplies the return code
+  const [departmentData, metaData] = await db.query("SELECT name FROM department");
+  console.log(departmentData);
+  const departmentChoices = departmentData.map((row) => ({
+    name: row.name,
+    value: row.name,
+  }));
   const answers = await inquirer.prompt([
     {
       type: "input",
@@ -97,6 +106,12 @@ async function addRole() {
       type: "input",
       name: "salary",
       message: "What is the salary for this role?",
+    },
+    {
+      type: "list",
+      name: "department_id",
+      message: "What department does this role belong to?",
+      choices: departmentChoices
     },
   ]);
   // user answer from the prompt
@@ -112,6 +127,18 @@ async function addRole() {
 // function to add a employee
 async function addEmployee() {
   console.log("Adding Employee");
+  const [roleData, metaData] = await db.query("SELECT title FROM role");
+  console.log(roleData);
+  const roleChoices = roleData.map((row) => ({
+    name: row.name,
+    value: row.title,
+  }));
+  const [managerData, managerMetaData] = await db.query("SELECT first_name, last_name FROM employee");
+  console.log(managerData);
+  const managerChoices = managerData.map((row) => ({
+    name: row.name,
+    value: row.first_name + ' ' + row.last_name,
+  }));
   const answers = await inquirer.prompt([
     {
       type: "input",
@@ -123,6 +150,18 @@ async function addEmployee() {
       type: "input",
       name: "last_name",
       message: "What is the last name of the employee?",
+    },
+    {
+      type: "list",
+      name: "role_id",
+      message: "What is the role of the employee?",
+      choices: roleChoices,
+    },
+    {
+      type: "list",
+      name: "manager_id",
+      message: "Who is the employee's manager?",
+      choices: managerChoices,
     },
   ]);
   // user answer from the prompt
@@ -136,85 +175,45 @@ async function addEmployee() {
   return await menu();
 }
 // function to update an employee
-async function updateEmployee() {
+async function updateEmployeeRole() {
   console.log("Updating Employee");
+  const [employeeData, employeeMetaData] = await db.query("SELECT first_name, last_name FROM employee");
+  console.log(employeeData);
+  const employeeChoices = employeeData.map((row) => ({
+    name: row.name,
+    value: row.first_name + ' ' + row.last_name,
+  }));
+  const [roleData, metaData] = await db.query("SELECT title FROM role");
+  console.log(roleData);
+  const roleChoices = roleData.map((row) => ({
+    name: row.name,
+    value: row.title,
+  }));
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      // name matches the column you're trying to populate or fill
+      name: "first_name",
+      message: "Which employee's role do you want to update?",
+      choices: employeeChoices
+    },
+    {
+      type: "list",
+      name: "role_id",
+      message: "Which role do you want to assign the selected employee?",
+      choices: roleChoices
+    },
+  ]);
+    // user answer from the prompt
+    console.log(answers);
+
+    const inputData = await db.query("INSERT INTO employee SET ?", answers);
+    console.log(inputData);
+  
+    console.log("Insert Sucessful\n\n\n\n");
+    // brings us back to the menu
   return await menu();
 }
-// function to capture input data
-// async function captureInput() {
-//   // looking at the schema file
-//   // i can see that i need to capture the name
-//   // id is automatically incrementing
-//   // since we only have 1 column to fill in, we need to only ask one question
-//   console.log("need to finish");
-//   const answers = await inquirer.prompt([
-//     {
-//       type: "input",
-//       // name matches the column you're trying to populate or fill
-//       name: "name",
-//       message: "Who do you want to put on the island?",
-//     },
-//   ]);
-//   // user answer from the prompt
-//   console.log(answers);
-
-//   // once you have the answers, send the answers to the insertSql() function
-//   return await insertSql(answers);
-// }
-// // function to do the sql insert
-// // inputs = answers
-// async function insertSql(inputs) {
-//   console.log(inputs);
-//   // use prepared statement
-//   const inputData = await db.query("INSERT INTO island SET ?", inputs);
-//   console.log(inputData);
-
-//   console.log("Insert Sucessful\n\n\n\n");
-//   // brings us back to the menu
-//   return await menu();
-// }
-
-// async function askWhoToBringToUsa() {
-//   // looking at the schema file
-//   // i can see that i need to capture the name
-//   // id is automatically incrementing
-//   // since we only have 1 column to fill in, we need to only ask one question
-//   console.log("need to finish");
-//   // data is the list of rows / onjects
-//   // metaData contains data like column names etc.
-//   // destructuring simplies the return code
-//   const [data, metaData] = await db.query("SELECT * FROM island");
-//   console.log(data);
-//   const choices = data.map((row) => ({
-//     name: row.name,
-//     value: row.id,
-//   }));
-//   console.log(choices);
-//   const answers = await inquirer.prompt([
-//     {
-//       type: "list",
-//       // name matches the column you're trying to populate or fill
-//       name: "island_id",
-//       message: "Who do you want to bring back to the USA?",
-//       choices: choices,
-//     },
-//   ]);
-//   // user answer from the prompt
-//   console.log(answers);
-
-//   // once you have the answers, send the answers to the insertSql() function
-//   return await sendSqlUsa(answers);
-// }
-// async function sendSqlUsa(inputs) {
-//   console.log(inputs);
-//   // use prepared statement
-//   const inputData = await db.query("INSERT INTO usa SET ?", inputs);
-//   console.log(inputData);
-
-//   console.log("Insert Sucessful\n\n\n\n");
-//   // brings us back to the menu
-//   return await menu();
-// }
 
 // exit function
 

@@ -5,30 +5,30 @@ USE business_db;
 
 CREATE TABLE department (
   id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  name VARCHAR(30)
+  name VARCHAR(30) NOT NULL
 );
 
 CREATE TABLE role (
   id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  title VARCHAR(30),
+  title VARCHAR(30) NOT NULL,
   salary DECIMAL,
   department_id INT NULL,
-  -- department_id in the role table will be a foreign key that is taking the reference from the department table's id column
+    -- department_id in the role table will be a foreign key that is taking the reference from the department table's id column
   FOREIGN KEY (department_id)
-  -- referening department table's id column
+    -- referencing department table's id column
   REFERENCES department(id)
-  ON DELETE SET null
+  ON DELETE CASCADE
 ); 
 
 CREATE TABLE employee (
   id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-  first_name VARCHAR(30),
-  last_name VARCHAR(30),
-  manager_id INT NULL,
+  first_name VARCHAR(30) NOT NULL,
+  last_name VARCHAR(30) NOT NULL,
   role_id INT NULL,
-    -- role_id in the role table will be a foreign key that is taking the reference from the role table's id column
+  manager_id INT NULL,
+    -- role_id in the employee table will be a foreign key that is taking the reference from the role table's id column
   FOREIGN KEY (role_id)
-  -- referening role table's id column
+    -- referencing role table's id column
   REFERENCES role(id)
-  ON DELETE SET null
+  ON DELETE SET NULL
 )
