@@ -13,6 +13,13 @@ async function menu() {
     "Add a role",
     "Add an employee",
     "Update an employee's role",
+    "Update an employee's manager",
+    "View employees by manager",
+    "View employees by department",
+    "Delete a department",
+    "Delete a role",
+    "Delete an employee",
+    "View the total utilized budget of a department",
   ];
   const answers = await inquirer.prompt([
     {
@@ -38,6 +45,20 @@ async function menu() {
       return addEmployee();
     case menuChoices[6]:
       return updateEmployeeRole();
+    case menuChoices[7]:
+      return updateEmployeeManager();
+    case menuChoices[8]:
+      return viewEmployeeByManager();
+    case menuChoices[9]:
+      return viewEmployeeByDepartment();
+    case menuChoices[10]:
+      return deleteDepartment();
+    case menuChoices[11]:
+      return deleteRole();
+    case menuChoices[12]:
+      return deleteEmployee();
+    case menuChoices[13]:
+      return viewTotalBudget();
   }
 }
 
@@ -86,15 +107,18 @@ async function addDepartment() {
 // function to add a role
 async function addRole() {
   console.log("Adding Role");
-  // departmentData is the list of rows / onjects
-  // metaData contains data like column names etc.
+  // departmentData is the list of rows / objects
+  // metaData contains data types for the columns
   // destructuring simplies the return code
-  const [departmentData, metaData] = await db.query("SELECT name FROM department");
-  console.log(departmentData);
+  const [departmentData, metaData] = await db.query(
+    "SELECT id, name FROM department"
+  );
+  // console.log(departmentData);
   const departmentChoices = departmentData.map((row) => ({
     name: row.name,
-    value: row.name,
+    value: row.id,
   }));
+  console.log(departmentChoices);
   const answers = await inquirer.prompt([
     {
       type: "input",
@@ -111,7 +135,7 @@ async function addRole() {
       type: "list",
       name: "department_id",
       message: "What department does this role belong to?",
-      choices: departmentChoices
+      choices: departmentChoices,
     },
   ]);
   // user answer from the prompt
@@ -127,17 +151,19 @@ async function addRole() {
 // function to add a employee
 async function addEmployee() {
   console.log("Adding Employee");
-  const [roleData, metaData] = await db.query("SELECT title FROM role");
+  const [roleData, metaData] = await db.query("SELECT title, id FROM role");
   console.log(roleData);
   const roleChoices = roleData.map((row) => ({
-    name: row.name,
-    value: row.title,
+    name: row.title,
+    value: row.id,
   }));
-  const [managerData, managerMetaData] = await db.query("SELECT first_name, last_name FROM employee");
+  const [managerData, managerMetaData] = await db.query(
+    "SELECT first_name, last_name, id FROM employee"
+  );
   console.log(managerData);
   const managerChoices = managerData.map((row) => ({
-    name: row.name,
-    value: row.first_name + ' ' + row.last_name,
+    name: row.first_name + " " + row.last_name,
+    value: row.id,
   }));
   const answers = await inquirer.prompt([
     {
@@ -177,44 +203,134 @@ async function addEmployee() {
 // function to update an employee
 async function updateEmployeeRole() {
   console.log("Updating Employee");
-  const [employeeData, employeeMetaData] = await db.query("SELECT first_name, last_name FROM employee");
+  const [employeeData, employeeMetaData] = await db.query(
+    "SELECT first_name, last_name, id FROM employee"
+  );
   console.log(employeeData);
   const employeeChoices = employeeData.map((row) => ({
-    name: row.name,
-    value: row.first_name + ' ' + row.last_name,
+    name: row.first_name + " " + row.last_name,
+    value: row.id,
   }));
-  const [roleData, metaData] = await db.query("SELECT title FROM role");
+  const [roleData, metaData] = await db.query("SELECT title, id FROM role");
   console.log(roleData);
   const roleChoices = roleData.map((row) => ({
-    name: row.name,
-    value: row.title,
+    name: row.title,
+    value: row.id,
   }));
   const answers = await inquirer.prompt([
     {
       type: "list",
       // name matches the column you're trying to populate or fill
-      name: "first_name",
+      name: "id",
       message: "Which employee's role do you want to update?",
-      choices: employeeChoices
+      choices: employeeChoices,
     },
     {
       type: "list",
       name: "role_id",
       message: "Which role do you want to assign the selected employee?",
-      choices: roleChoices
+      choices: roleChoices,
     },
   ]);
-    // user answer from the prompt
-    console.log(answers);
+  // user answer from the prompt
+  console.log(answers);
 
-    const inputData = await db.query("INSERT INTO employee SET ?", answers);
-    console.log(inputData);
-  
-    console.log("Insert Sucessful\n\n\n\n");
-    // brings us back to the menu
+  const inputData = await db.query(
+    "UPDATE employee SET role_id = " + answers.role_id + "WHERE id = " + answers.id
+  );
+  console.log(inputData);
+
+  console.log("Update Sucessful\n\n\n\n");
+  // brings us back to the menu
+  return await menu();
+}
+// function to add a department
+async function deleteDepartment() {
+  console.log("Deleting Department");
+  const [depData, metaData] = await db.query("SELECT * FROM department");
+  console.log(depData);
+  const depChoices = depData.map((row) => ({
+    name: row.name,
+    value: row.id,
+  }));
+  console.log(depChoices)
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      // name matches the column you're trying to populate or fill
+      name: "id",
+      message: "What department do you want to delete?",
+      choices: depChoices
+    },
+  ]);
+  // user answer from the prompt
+  console.log(answers);
+
+  const inputData = await db.query("DELETE FROM department WHERE id = " + answers.id);
+  console.log(inputData);
+
+  console.log("Delete Sucessful\n\n\n\n");
+  // brings us back to the menu
   return await menu();
 }
 
+async function deleteRole() {
+  console.log("Deleting Department");
+  const [roleData, metaData] = await db.query("SELECT title, id FROM role");
+  console.log(roleData);
+  const roleChoices = roleData.map((row) => ({
+    name: row.title,
+    value: row.id,
+  }));
+  console.log(roleChoices)
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      // name matches the column you're trying to populate or fill
+      name: "id",
+      message: "What role do you want to delete?",
+      choices: roleChoices
+    },
+  ]);
+  // user answer from the prompt
+  console.log(answers);
+
+  const inputData = await db.query("DELETE FROM role WHERE id = " + answers.id);
+  console.log(inputData);
+
+  console.log("Delete Sucessful\n\n\n\n");
+  // brings us back to the menu
+  return await menu();
+}
+
+async function deleteEmployee() {
+  console.log("Deleting Employeee")
+  const [empData, metaData] = await db.query("SELECT first_name, last_name, id FROM employee");
+  console.log(empData);
+  const empChoices = empData.map((row) => ({
+    name: row.first_name + " " + row.last_name,
+    value: row.id,
+  }));
+  console.log(empChoices)
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      // name matches the column you're trying to populate or fill
+      name: "id",
+      message: "What role do you want to delete?",
+      choices: empChoices
+    },
+  ]);
+  // user answer from the prompt
+  console.log(answers);
+
+  const inputData = await db.query("DELETE FROM employee WHERE id = " + answers.id);
+  console.log(inputData);
+
+  console.log("Delete Sucessful\n\n\n\n");
+  // brings us back to the menu
+  return await menu();
+}
 // exit function
 
 // start/init function
