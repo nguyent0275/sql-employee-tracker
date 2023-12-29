@@ -1,6 +1,7 @@
 // db connection file using dotenv
 const inquirer = require("inquirer");
 const startConnection = require("./db/connections");
+const cTable = require('console.table'); 
 let db = null;
 
 // menu function
@@ -62,25 +63,34 @@ async function menu() {
   }
 }
 
+// const sanitizeInput = (obj) => {
+//   let output = obj;
+//   output = output.replaceAll("'", "");
+//   output = output.replaceAll(";", "");
+//   output = output.replaceAll("\"", "");
+//   output = output.replaceAll("=", "");
+//   return output;
+// }
+
 // function to view all Departments
 async function viewDepartments() {
   console.log("Viewing Departments");
-  const departments = await db.query("SELECT * FROM department");
-  console.log(departments);
+  const [ departmentsData, departmentMetaData ] = await db.query("SELECT * FROM department");
+  console.table(departmentsData);
   return await menu();
 }
 // function to view all Departments
 async function viewRoles() {
   console.log("Viewing Departments");
-  const roles = await db.query("SELECT * FROM role");
-  console.log(roles);
+  const [ rolesData, rolesMetaData ] = await db.query("SELECT * FROM role");
+  console.table(rolesData);
   return await menu();
 }
 // function to view all Departments
 async function viewEmployees() {
   console.log("Viewing Departments");
-  const employees = await db.query("SELECT * FROM employee");
-  console.log(employees);
+  const [ employeesData, rolesMetaData ] = await db.query("SELECT * FROM employee");
+  console.table(employeesData);
   return await menu();
 }
 // function to add a department
@@ -200,7 +210,7 @@ async function addEmployee() {
   // brings us back to the menu
   return await menu();
 }
-// function to update an employee
+// function to update an employee's role
 async function updateEmployeeRole() {
   console.log("Updating Employee");
   const [employeeData, employeeMetaData] = await db.query(
@@ -235,16 +245,80 @@ async function updateEmployeeRole() {
   // user answer from the prompt
   console.log(answers);
 
+  const sql = "UPDATE employee SET role_id = ? WHERE id = ? "
+  const sqlParams = [answers.role_id, answers.id]
+
   const inputData = await db.query(
-    "UPDATE employee SET role_id = " + answers.role_id + "WHERE id = " + answers.id
+    sql, sqlParams, (err, results) => {
+      if (err) throw err;
+      console.log("Update Sucessful\n\n\n\n");
+    }
   );
   console.log(inputData);
 
-  console.log("Update Sucessful\n\n\n\n");
   // brings us back to the menu
   return await menu();
 }
-// function to add a department
+// function to update an employee's manager
+async function updateEmployeeManager() {
+  console.log("Updating Employee");
+  const [employeeData, employeeMetaData] = await db.query(
+    "SELECT first_name, last_name, id, manager_id FROM employee"
+  );
+  console.log(employeeData);
+  const employeeChoices = employeeData.map((row) => ({
+    name: row.first_name + " " + row.last_name,
+    value: row.id,
+    manager: row.manager_id
+  }));
+
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      // name matches the column you're trying to populate or fill
+      name: "id",
+      message: "Which employee's manager do you want to update?",
+      choices: employeeChoices,
+    },
+    {
+      type: "list",
+      name: "manager_id",
+      message: "Which manager do you want to assign the selected employee?",
+      choices: employeeChoices,
+    },
+  ]);
+  // user answer from the prompt
+  console.log(answers);
+
+  const sql = "UPDATE employee SET manager_id = ? WHERE id = ? "
+  const sqlParams = [answers.manager_id, answers.id]
+
+  const inputData = await db.query(
+    sql, sqlParams, (err, results) => {
+      if (err) throw err;
+      console.log("Update Sucessful\n\n\n\n");
+    }
+  );
+
+  // brings us back to the menu
+  return await menu();
+}
+// view employees by department
+async function viewEmployeeByDepartment() {
+  console.log("Viewing Departments");
+  const [employeeData, employeeMetaData] = await db.query("SELECT * FROM employee INNER JOIN role ON employee.role_id = role.id ORDER BY department_id");
+  console.table(employeeData);
+  return await menu();
+}
+// views employees by manager
+async function viewEmployeeByManager() {
+  console.log("Viewing Departments");
+  const [employeeData, employeeMetaData] = await db.query("SELECT * FROM employee  ORDER BY manager_id");
+  console.table(employeeData);
+  return await menu();
+}
+
+// function to delete a department
 async function deleteDepartment() {
   console.log("Deleting Department");
   const [depData, metaData] = await db.query("SELECT * FROM department");
@@ -266,14 +340,14 @@ async function deleteDepartment() {
   // user answer from the prompt
   console.log(answers);
 
-  const inputData = await db.query("DELETE FROM department WHERE id = " + answers.id);
+  const inputData = await db.query("DELETE FROM department WHERE id = ?", answers.id);
   console.log(inputData);
 
   console.log("Delete Sucessful\n\n\n\n");
   // brings us back to the menu
   return await menu();
 }
-
+// function to delete a role
 async function deleteRole() {
   console.log("Deleting Department");
   const [roleData, metaData] = await db.query("SELECT title, id FROM role");
@@ -295,14 +369,14 @@ async function deleteRole() {
   // user answer from the prompt
   console.log(answers);
 
-  const inputData = await db.query("DELETE FROM role WHERE id = " + answers.id);
+  const inputData = await db.query("DELETE FROM role WHERE id = ?", answers.id);
   console.log(inputData);
 
   console.log("Delete Sucessful\n\n\n\n");
   // brings us back to the menu
   return await menu();
 }
-
+// function to delete an employee
 async function deleteEmployee() {
   console.log("Deleting Employeee")
   const [empData, metaData] = await db.query("SELECT first_name, last_name, id FROM employee");
@@ -324,11 +398,19 @@ async function deleteEmployee() {
   // user answer from the prompt
   console.log(answers);
 
-  const inputData = await db.query("DELETE FROM employee WHERE id = " + answers.id);
+  const inputData = await db.query("DELETE FROM employee WHERE id = ?", answers.id);
   console.log(inputData);
 
   console.log("Delete Sucessful\n\n\n\n");
   // brings us back to the menu
+  return await menu();
+}
+
+// view employees by department
+async function viewTotalBudget() {
+  console.log("Viewing Departments");
+  const [ totalBudgetData, budgetMetaData] = await db.query("SELECT role.department_id, SUM(role.salary) as totalBudget FROM role LEFT JOIN department ON role.department_id = department.id GROUP BY role.department_id, role.salary");
+  console.table(totalBudgetData);
   return await menu();
 }
 // exit function
