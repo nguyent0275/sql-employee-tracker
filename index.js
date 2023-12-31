@@ -1,7 +1,7 @@
 // db connection file using dotenv
 const inquirer = require("inquirer");
 const startConnection = require("./db/connections");
-const cTable = require('console.table'); 
+const cTable = require("console.table");
 let db = null;
 
 // menu function
@@ -21,6 +21,7 @@ async function menu() {
     "Delete a role",
     "Delete an employee",
     "View the total utilized budget of a department",
+    "Exit",
   ];
   const answers = await inquirer.prompt([
     {
@@ -60,42 +61,48 @@ async function menu() {
       return deleteEmployee();
     case menuChoices[13]:
       return viewTotalBudget();
+    case menuChoices[14]:
+      return exit();
   }
 }
-
-// const sanitizeInput = (obj) => {
-//   let output = obj;
-//   output = output.replaceAll("'", "");
-//   output = output.replaceAll(";", "");
-//   output = output.replaceAll("\"", "");
-//   output = output.replaceAll("=", "");
-//   return output;
-// }
 
 // function to view all Departments
 async function viewDepartments() {
   console.log("Viewing Departments");
-  const [ departmentsData, departmentMetaData ] = await db.query("SELECT * FROM department");
+  const [departmentsData, departmentMetaData] = await db.query(
+    "SELECT id AS department_id, name AS department_name FROM department"
+  );
   console.table(departmentsData);
+  // brings us back to the menu
   return await menu();
 }
 // function to view all Departments
 async function viewRoles() {
   console.log("Viewing Departments");
-  const [ rolesData, rolesMetaData ] = await db.query("SELECT * FROM role");
+  const [rolesData, rolesMetaData] =
+    await db.query(`SELECT role.id, title, salary, department.name AS deparment_name
+  FROM role 
+  LEFT JOIN department ON role.department_id = department.id`);
   console.table(rolesData);
   return await menu();
 }
 // function to view all Departments
 async function viewEmployees() {
   console.log("Viewing Departments");
-  const [ employeesData, rolesMetaData ] = await db.query("SELECT * FROM employee");
+  const [employeesData, rolesMetaData] = await db.query(
+    `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager 
+    FROM employee 
+    LEFT JOIN role ON employee.role_id = role.id 
+    LEFT JOIN department ON role.department_id = department.id 
+    LEFT JOIN employee AS manager ON employee.manager_id = manager.id`
+  );
   console.table(employeesData);
   return await menu();
 }
 // function to add a department
 async function addDepartment() {
   console.log("Adding Department");
+  // stores user answer from the prompt
   const answers = await inquirer.prompt([
     {
       type: "input",
@@ -104,14 +111,19 @@ async function addDepartment() {
       message: "What department do you want to add?",
     },
   ]);
-  // user answer from the prompt
-  console.log(answers);
 
-  const inputData = await db.query("INSERT INTO department SET ?", answers);
+  // sql query with error handling
+  const inputData = await db.query(
+    "INSERT INTO department SET ?",
+    answers,
+    (err, results) => {
+      if (err) throw err;
+      console.log("Update Sucessful\n\n\n\n");
+    }
+  );
   console.log(inputData);
 
   console.log("Insert Sucessful\n\n\n\n");
-  // brings us back to the menu
   return await menu();
 }
 // function to add a role
@@ -119,20 +131,20 @@ async function addRole() {
   console.log("Adding Role");
   // departmentData is the list of rows / objects
   // metaData contains data types for the columns
-  // destructuring simplies the return code
+  // destructuring simplifies the return code
   const [departmentData, metaData] = await db.query(
     "SELECT id, name FROM department"
   );
-  // console.log(departmentData);
+  // creating a key-value pair for id and name
+  // this array is also used as the list of multiple choices prompted to the user in the list type questions
   const departmentChoices = departmentData.map((row) => ({
     name: row.name,
     value: row.id,
   }));
-  console.log(departmentChoices);
+
   const answers = await inquirer.prompt([
     {
       type: "input",
-      // name matches the column you're trying to populate or fill
       name: "title",
       message: "What role do you want to add?",
     },
@@ -148,21 +160,25 @@ async function addRole() {
       choices: departmentChoices,
     },
   ]);
-  // user answer from the prompt
-  console.log(answers);
 
-  const inputData = await db.query("INSERT INTO role SET ?", answers);
+  const inputData = await db.query(
+    "INSERT INTO role SET ?",
+    answers,
+    (err, results) => {
+      if (err) throw err;
+      console.log("Update Sucessful\n\n\n\n");
+    }
+  );
   console.log(inputData);
 
   console.log("Insert Sucessful\n\n\n\n");
-  // brings us back to the menu
   return await menu();
 }
 // function to add a employee
 async function addEmployee() {
   console.log("Adding Employee");
   const [roleData, metaData] = await db.query("SELECT title, id FROM role");
-  console.log(roleData);
+  // creating a key-value pair between title and id from the role's table
   const roleChoices = roleData.map((row) => ({
     name: row.title,
     value: row.id,
@@ -170,15 +186,18 @@ async function addEmployee() {
   const [managerData, managerMetaData] = await db.query(
     "SELECT first_name, last_name, id FROM employee"
   );
-  console.log(managerData);
+  // creating a no manger option with a value of null to add to the array of choices
+  const nullValue = { name: "None", value: null };
+  // concatenating the first_name and last_name values
+  // creating a key-value pair between manager's name and id from the employee table
   const managerChoices = managerData.map((row) => ({
     name: row.first_name + " " + row.last_name,
     value: row.id,
   }));
+  managerChoices.unshift(nullValue);
   const answers = await inquirer.prompt([
     {
       type: "input",
-      // name matches the column you're trying to populate or fill
       name: "first_name",
       message: "What is the first name of the employee?",
     },
@@ -200,14 +219,18 @@ async function addEmployee() {
       choices: managerChoices,
     },
   ]);
-  // user answer from the prompt
-  console.log(answers);
 
-  const inputData = await db.query("INSERT INTO employee SET ?", answers);
+  const inputData = await db.query(
+    "INSERT INTO employee SET ?",
+    answers,
+    (err, results) => {
+      if (err) throw err;
+      console.log("Update Sucessful\n\n\n\n");
+    }
+  );
   console.log(inputData);
 
   console.log("Insert Sucessful\n\n\n\n");
-  // brings us back to the menu
   return await menu();
 }
 // function to update an employee's role
@@ -216,13 +239,11 @@ async function updateEmployeeRole() {
   const [employeeData, employeeMetaData] = await db.query(
     "SELECT first_name, last_name, id FROM employee"
   );
-  console.log(employeeData);
   const employeeChoices = employeeData.map((row) => ({
     name: row.first_name + " " + row.last_name,
     value: row.id,
   }));
   const [roleData, metaData] = await db.query("SELECT title, id FROM role");
-  console.log(roleData);
   const roleChoices = roleData.map((row) => ({
     name: row.title,
     value: row.id,
@@ -230,7 +251,6 @@ async function updateEmployeeRole() {
   const answers = await inquirer.prompt([
     {
       type: "list",
-      // name matches the column you're trying to populate or fill
       name: "id",
       message: "Which employee's role do you want to update?",
       choices: employeeChoices,
@@ -242,21 +262,17 @@ async function updateEmployeeRole() {
       choices: roleChoices,
     },
   ]);
-  // user answer from the prompt
-  console.log(answers);
 
-  const sql = "UPDATE employee SET role_id = ? WHERE id = ? "
-  const sqlParams = [answers.role_id, answers.id]
+  // saving sql query and parameter under variables to pass multiple values into a query
+  const sql = "UPDATE employee SET role_id = ? WHERE id = ? ";
+  const sqlParams = [answers.role_id, answers.id];
 
-  const inputData = await db.query(
-    sql, sqlParams, (err, results) => {
-      if (err) throw err;
-      console.log("Update Sucessful\n\n\n\n");
-    }
-  );
+  const inputData = await db.query(sql, sqlParams, (err, results) => {
+    if (err) throw err;
+    console.log("Update Sucessful\n\n\n\n");
+  });
   console.log(inputData);
 
-  // brings us back to the menu
   return await menu();
 }
 // function to update an employee's manager
@@ -265,17 +281,15 @@ async function updateEmployeeManager() {
   const [employeeData, employeeMetaData] = await db.query(
     "SELECT first_name, last_name, id, manager_id FROM employee"
   );
-  console.log(employeeData);
+  // creating an array of objects with key-value pairs for name, id, and manager id
   const employeeChoices = employeeData.map((row) => ({
     name: row.first_name + " " + row.last_name,
     value: row.id,
-    manager: row.manager_id
+    manager: row.manager_id,
   }));
-
   const answers = await inquirer.prompt([
     {
       type: "list",
-      // name matches the column you're trying to populate or fill
       name: "id",
       message: "Which employee's manager do you want to update?",
       choices: employeeChoices,
@@ -287,144 +301,178 @@ async function updateEmployeeManager() {
       choices: employeeChoices,
     },
   ]);
-  // user answer from the prompt
-  console.log(answers);
 
-  const sql = "UPDATE employee SET manager_id = ? WHERE id = ? "
-  const sqlParams = [answers.manager_id, answers.id]
+  const sql = "UPDATE employee SET manager_id = ? WHERE id = ? ";
+  const sqlParams = [answers.manager_id, answers.id];
 
-  const inputData = await db.query(
-    sql, sqlParams, (err, results) => {
-      if (err) throw err;
-      console.log("Update Sucessful\n\n\n\n");
-    }
-  );
+  const inputData = await db.query(sql, sqlParams, (err, results) => {
+    if (err) throw err;
+    console.log("Update Sucessful\n\n\n\n");
+  });
+  console.log(inputData);
 
-  // brings us back to the menu
-  return await menu();
-}
-// view employees by department
-async function viewEmployeeByDepartment() {
-  console.log("Viewing Departments");
-  const [employeeData, employeeMetaData] = await db.query("SELECT * FROM employee INNER JOIN role ON employee.role_id = role.id ORDER BY department_id");
-  console.table(employeeData);
   return await menu();
 }
 // views employees by manager
 async function viewEmployeeByManager() {
   console.log("Viewing Departments");
-  const [employeeData, employeeMetaData] = await db.query("SELECT * FROM employee  ORDER BY manager_id");
+  const [employeeData, employeeMetaData] = await db.query(
+    `SELECT CONCAT(manager.first_name, " ", manager.last_name) AS manager, employee.id, employee.first_name, employee.last_name 
+    FROM employee 
+    LEFT JOIN role ON employee.role_id = role.id 
+    LEFT JOIN department ON role.department_id = department.id 
+    LEFT JOIN employee AS manager ON employee.manager_id = manager.id
+    WHERE employee.manager_id IS NOT NULL
+    ORDER BY manager`
+  );
   console.table(employeeData);
   return await menu();
 }
-
+// view employees by department
+async function viewEmployeeByDepartment() {
+  console.log("Viewing Departments");
+  const [employeeData, employeeMetaData] = await db.query(
+    `SELECT department.name as department, employee.id, employee.first_name, employee.last_name
+    FROM employee 
+    LEFT JOIN role ON employee.role_id = role.id 
+    LEFT JOIN department ON role.department_id = department.id
+    ORDER BY department.name`
+  );
+  console.table(employeeData);
+  return await menu();
+}
 // function to delete a department
 async function deleteDepartment() {
   console.log("Deleting Department");
   const [depData, metaData] = await db.query("SELECT * FROM department");
-  console.log(depData);
   const depChoices = depData.map((row) => ({
     name: row.name,
     value: row.id,
   }));
-  console.log(depChoices)
   const answers = await inquirer.prompt([
     {
       type: "list",
-      // name matches the column you're trying to populate or fill
       name: "id",
       message: "What department do you want to delete?",
-      choices: depChoices
+      choices: depChoices,
     },
   ]);
-  // user answer from the prompt
-  console.log(answers);
 
-  const inputData = await db.query("DELETE FROM department WHERE id = ?", answers.id);
+  const inputData = await db.query(
+    "DELETE FROM department WHERE id = ?",
+    answers.id,
+    (err, results) => {
+      if (err) throw err;
+      console.log("Update Sucessful\n\n\n\n");
+    }
+  );
   console.log(inputData);
 
   console.log("Delete Sucessful\n\n\n\n");
-  // brings us back to the menu
   return await menu();
 }
 // function to delete a role
 async function deleteRole() {
   console.log("Deleting Department");
   const [roleData, metaData] = await db.query("SELECT title, id FROM role");
-  console.log(roleData);
   const roleChoices = roleData.map((row) => ({
     name: row.title,
     value: row.id,
   }));
-  console.log(roleChoices)
   const answers = await inquirer.prompt([
     {
       type: "list",
-      // name matches the column you're trying to populate or fill
       name: "id",
       message: "What role do you want to delete?",
-      choices: roleChoices
+      choices: roleChoices,
     },
   ]);
-  // user answer from the prompt
-  console.log(answers);
 
-  const inputData = await db.query("DELETE FROM role WHERE id = ?", answers.id);
+  const inputData = await db.query(
+    "DELETE FROM role WHERE id = ?",
+    answers.id,
+    (err, results) => {
+      if (err) throw err;
+      console.log("Update Sucessful\n\n\n\n");
+    }
+  );
   console.log(inputData);
 
   console.log("Delete Sucessful\n\n\n\n");
-  // brings us back to the menu
   return await menu();
 }
 // function to delete an employee
 async function deleteEmployee() {
-  console.log("Deleting Employeee")
-  const [empData, metaData] = await db.query("SELECT first_name, last_name, id FROM employee");
-  console.log(empData);
+  console.log("Deleting Employeee");
+  const [empData, metaData] = await db.query(
+    "SELECT first_name, last_name, id FROM employee"
+  );
   const empChoices = empData.map((row) => ({
     name: row.first_name + " " + row.last_name,
     value: row.id,
   }));
-  console.log(empChoices)
   const answers = await inquirer.prompt([
     {
       type: "list",
-      // name matches the column you're trying to populate or fill
       name: "id",
       message: "What role do you want to delete?",
-      choices: empChoices
+      choices: empChoices,
     },
   ]);
-  // user answer from the prompt
-  console.log(answers);
 
-  const inputData = await db.query("DELETE FROM employee WHERE id = ?", answers.id);
+  const inputData = await db.query(
+    "DELETE FROM employee WHERE id = ?",
+    answers.id,
+    (err, results) => {
+      if (err) throw err;
+      console.log("Update Sucessful\n\n\n\n");
+    }
+  );
   console.log(inputData);
 
   console.log("Delete Sucessful\n\n\n\n");
-  // brings us back to the menu
   return await menu();
 }
 
 // view employees by department
 async function viewTotalBudget() {
   console.log("Viewing Departments");
-  const [ totalBudgetData, budgetMetaData] = await db.query("SELECT role.department_id, SUM(role.salary) as totalBudget FROM role LEFT JOIN department ON role.department_id = department.id GROUP BY role.department_id, role.salary");
+  const [depData, metaData] = await db.query("SELECT * FROM department");
+  const depChoices = depData.map((row) => ({
+    name: row.name,
+    value: row.id,
+  }));
+
+  const answers = await inquirer.prompt([
+    {
+      type: "list",
+      name: "id",
+      message: "What department do you want to view the budget for?",
+      choices: depChoices,
+    },
+  ]);
+
+  const [totalBudgetData, metaBudgetData] = await db.query(
+    `SELECT department.name as department, SUM(role.salary) AS total_budget
+    FROM employee 
+    LEFT JOIN role ON employee.role_id = role.id 
+    LEFT JOIN department ON role.department_id = department.id 
+    WHERE department.id = ?`,
+    answers.id
+  );
+
   console.table(totalBudgetData);
   return await menu();
 }
 // exit function
+async function exit() {
+  process.exit();
+}
 
 // start/init function
 async function init() {
   // connects to the database/ use await to wait for connection to finish
   db = await startConnection();
-  // checks the connection
-  //   const results = await db.query("SELECT * FROM island");
-
-  // gets data from results
-  //   console.log(results[0]);
-
   await menu();
 }
 init();

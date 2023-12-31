@@ -31,4 +31,10 @@ CREATE TABLE employee (
     -- referencing role table's id column
   REFERENCES role(id)
   ON DELETE SET NULL
+  ON UPDATE CASCADE,
+    -- manager_id is referencing the employee's table id column
+  FOREIGN KEY (manager_id)
+  REFERENCES employee(id)
+  ON DELETE SET NULL
+  ON UPDATE CASCADE
 )

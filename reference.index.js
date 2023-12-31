@@ -73,3 +73,12 @@
 //   // brings us back to the menu
 //   return await menu();
 // }
+
+// const sanitizeInput = (obj) => {
+//   let output = obj;
+//   output = output.replaceAll("'", "");
+//   output = output.replaceAll(";", "");
+//   output = output.replaceAll("\"", "");
+//   output = output.replaceAll("=", "");
+//   return output;
+// }
