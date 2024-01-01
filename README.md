@@ -37,19 +37,19 @@ node index.js
 
 ***Initial SQL setup:***
 1. Open the intergrated terminal in the ```db``` folder.
-2. Run the command ```mysql -u root -p```
-3. Login with your credentials
-4. Run the command ```source schema.sql``` to create the database and tables
-5. Run the command ```source seeds.sql``` to populate the tables with the default values
+2. Run the command ```mysql -u root -p```.
+3. Login with your credentials.
+4. Run the command ```source schema.sql``` to create the database and tables.
+5. Run the command ```source seeds.sql``` to populate the tables with the default values.
 
 ***Setting up .env file:***
-1. Navigate to the ```.env``` file in the root folder
-2. Change the ```DB_PASSWORD``` value to your SQL password (Change any other values that may be different)
+1. Copy the ```.env.EXAMPLE``` file in the root folder and rename it to ```.env```.
+2. Fill out the ```DB_...``` with your credentials.
 
 ***Running the CLI:***
-5. Run the command ```npm i``` to install any necessary packages.
-6. Run the command ```node index``` to start the application.
-7. The command prompt will begin on your terminal
+1. Run the command ```npm i``` to install any necessary packages.
+2. Run the command ```node index``` to start the application.
+3. The command prompt will begin on your terminal.
 
 ## User Story
 ```
@@ -95,9 +95,9 @@ link
 ```
 A link to the [repository](repo link):
 ```
-link
+https://github.com/nguyent0275/sql-employee-tracker
 ```
 
 
 ## License
-sql-employee-tracker is licensed under the MIT (or any later version). Refer to the LICENSE.txt.
+SQL-Employee-Tracker is licensed under the MIT (or any later version). Refer to the LICENSE.txt.

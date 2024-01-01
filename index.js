@@ -26,7 +26,7 @@ async function menu() {
   const answers = await inquirer.prompt([
     {
       type: "list",
-      message: "What do you want to do next?",
+      message: "What would you like to do?",
       name: "option",
       choices: menuChoices,
     },
@@ -78,7 +78,7 @@ async function viewDepartments() {
 }
 // function to view all Departments
 async function viewRoles() {
-  console.log("Viewing Departments");
+  console.log("Viewing Roles");
   const [rolesData, rolesMetaData] =
     await db.query(`SELECT role.id, title, salary, department.name AS deparment_name
   FROM role 
@@ -88,7 +88,7 @@ async function viewRoles() {
 }
 // function to view all Departments
 async function viewEmployees() {
-  console.log("Viewing Departments");
+  console.log("Viewing Employees");
   const [employeesData, rolesMetaData] = await db.query(
     `SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager 
     FROM employee 
@@ -111,14 +111,13 @@ async function addDepartment() {
       message: "What department do you want to add?",
     },
   ]);
-
   // sql query with error handling
   const inputData = await db.query(
     "INSERT INTO department SET ?",
     answers,
     (err, results) => {
       if (err) throw err;
-      console.log("Update Sucessful\n\n\n\n");
+      console.error(err);
     }
   );
   console.log(inputData);
@@ -166,7 +165,7 @@ async function addRole() {
     answers,
     (err, results) => {
       if (err) throw err;
-      console.log("Update Sucessful\n\n\n\n");
+      console.error(err);
     }
   );
   console.log(inputData);
@@ -225,7 +224,7 @@ async function addEmployee() {
     answers,
     (err, results) => {
       if (err) throw err;
-      console.log("Update Sucessful\n\n\n\n");
+      console.error(err);
     }
   );
   console.log(inputData);
@@ -235,7 +234,7 @@ async function addEmployee() {
 }
 // function to update an employee's role
 async function updateEmployeeRole() {
-  console.log("Updating Employee");
+  console.log("Updating Employee's Role");
   const [employeeData, employeeMetaData] = await db.query(
     "SELECT first_name, last_name, id FROM employee"
   );
@@ -269,7 +268,7 @@ async function updateEmployeeRole() {
 
   const inputData = await db.query(sql, sqlParams, (err, results) => {
     if (err) throw err;
-    console.log("Update Sucessful\n\n\n\n");
+    console.error(err);
   });
   console.log(inputData);
 
@@ -277,7 +276,7 @@ async function updateEmployeeRole() {
 }
 // function to update an employee's manager
 async function updateEmployeeManager() {
-  console.log("Updating Employee");
+  console.log("Updating Employee's Manager");
   const [employeeData, employeeMetaData] = await db.query(
     "SELECT first_name, last_name, id, manager_id FROM employee"
   );
@@ -307,7 +306,7 @@ async function updateEmployeeManager() {
 
   const inputData = await db.query(sql, sqlParams, (err, results) => {
     if (err) throw err;
-    console.log("Update Sucessful\n\n\n\n");
+    console.error(err);
   });
   console.log(inputData);
 
@@ -315,7 +314,7 @@ async function updateEmployeeManager() {
 }
 // views employees by manager
 async function viewEmployeeByManager() {
-  console.log("Viewing Departments");
+  console.log("Viewing Employees by Manager");
   const [employeeData, employeeMetaData] = await db.query(
     `SELECT CONCAT(manager.first_name, " ", manager.last_name) AS manager, employee.id, employee.first_name, employee.last_name 
     FROM employee 
@@ -330,7 +329,7 @@ async function viewEmployeeByManager() {
 }
 // view employees by department
 async function viewEmployeeByDepartment() {
-  console.log("Viewing Departments");
+  console.log("Viewing Employees by Departments");
   const [employeeData, employeeMetaData] = await db.query(
     `SELECT department.name as department, employee.id, employee.first_name, employee.last_name
     FROM employee 
@@ -363,7 +362,7 @@ async function deleteDepartment() {
     answers.id,
     (err, results) => {
       if (err) throw err;
-      console.log("Update Sucessful\n\n\n\n");
+      console.error(err);
     }
   );
   console.log(inputData);
@@ -373,7 +372,7 @@ async function deleteDepartment() {
 }
 // function to delete a role
 async function deleteRole() {
-  console.log("Deleting Department");
+  console.log("Deleting Role");
   const [roleData, metaData] = await db.query("SELECT title, id FROM role");
   const roleChoices = roleData.map((row) => ({
     name: row.title,
@@ -393,7 +392,7 @@ async function deleteRole() {
     answers.id,
     (err, results) => {
       if (err) throw err;
-      console.log("Update Sucessful\n\n\n\n");
+      console.error(err);
     }
   );
   console.log(inputData);
@@ -425,7 +424,7 @@ async function deleteEmployee() {
     answers.id,
     (err, results) => {
       if (err) throw err;
-      console.log("Update Sucessful\n\n\n\n");
+      console.error(err);
     }
   );
   console.log(inputData);
@@ -436,7 +435,7 @@ async function deleteEmployee() {
 
 // view employees by department
 async function viewTotalBudget() {
-  console.log("Viewing Departments");
+  console.log("Viewing Total Budget");
   const [depData, metaData] = await db.query("SELECT * FROM department");
   const depChoices = depData.map((row) => ({
     name: row.name,
