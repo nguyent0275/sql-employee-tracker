@@ -87,13 +87,13 @@ What is my email and how can you reach me?<br>
 My email is nguyentoan0275@gmail.com, please feel free to send me an email with any questions regarding projects or colllaborations.
 
 ## Links
-![Command Line](./assets/images/command_line.png)
+![Command Line](/assets/images/sql-employee-tracker.png)
 
-A link to the [Video](link):
+A link to the [Video](https://www.youtube.com/watch?v=8iTGWZnX8a4):
 ```
-link
+https://www.youtube.com/watch?v=8iTGWZnX8a4
 ```
-A link to the [repository](repo link):
+A link to the [repository](https://github.com/nguyent0275/sql-employee-tracker):
 ```
 https://github.com/nguyent0275/sql-employee-tracker
 ```
